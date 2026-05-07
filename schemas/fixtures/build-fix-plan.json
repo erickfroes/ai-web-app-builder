@@ -1,0 +1,18 @@
+{
+  "rootCause": "Type mismatch between generated component props and route loader output",
+  "steps": [
+    {
+      "title": "Align loader return type",
+      "description": "Update route loader to return Task[] consistently",
+      "filePatches": [
+        {
+          "operation": "update",
+          "path": "features/generation/routes/dashboard.ts",
+          "content": "// updated implementation",
+          "reason": "Ensure loader output matches component expectation"
+        }
+      ]
+    }
+  ],
+  "validationChecks": ["pnpm typecheck", "pnpm test"]
+}

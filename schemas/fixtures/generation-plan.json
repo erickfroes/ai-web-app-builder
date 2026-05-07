@@ -1,0 +1,48 @@
+{
+  "appSpec": {
+    "name": "TaskPilot",
+    "description": "A collaborative project tracking app",
+    "goals": ["Manage tasks", "Improve team visibility"],
+    "targetUsers": ["Project managers", "Developers"],
+    "features": ["Task boards", "Comments", "Notifications"]
+  },
+  "designSpec": {
+    "theme": "system",
+    "styleKeywords": ["clean", "premium", "saas"],
+    "colorTokens": ["bg-background", "text-foreground", "bg-primary", "text-primary-foreground"],
+    "typography": {
+      "headingFont": "Inter",
+      "bodyFont": "Inter"
+    }
+  },
+  "dataModelSpec": {
+    "entities": [
+      {
+        "name": "Task",
+        "fields": [
+          { "name": "id", "type": "string", "required": true },
+          { "name": "title", "type": "string", "required": true }
+        ]
+      }
+    ]
+  },
+  "routes": [
+    {
+      "path": "/dashboard",
+      "title": "Dashboard",
+      "authRequired": true,
+      "primaryAction": "Create Task",
+      "components": ["TaskBoard", "StatsCards"]
+    }
+  ],
+  "components": [
+    {
+      "name": "TaskBoard",
+      "purpose": "Render task list grouped by status",
+      "props": [
+        { "name": "tasks", "type": "Task[]", "required": true }
+      ]
+    }
+  ],
+  "executionOrder": ["Generate schemas", "Generate routes", "Generate components"]
+}
