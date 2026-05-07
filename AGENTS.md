@@ -6,6 +6,14 @@ Build a SaaS that generates high-quality Next.js + React + TailwindCSS web apps 
 
 The system must generate structured specifications first, then generate files from those specs.
 
+## Current repository phase
+
+This repo is currently in a **documentation-first** phase.
+
+- Do not scaffold the runtime app until roadmap steps allow it.
+- Do not add dependencies unless explicitly requested for a specific PR scope.
+- Keep architecture and schema docs as the source of truth.
+
 ## Non-negotiable rules
 
 - Do not expose OPENAI_API_KEY to the client.
@@ -29,12 +37,14 @@ The system must generate structured specifications first, then generate files fr
 
 ## Commands
 
-Use these before completing a PR:
+Use these before completing a PR (when the app/tooling exists):
 
 pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
+
+If the commands cannot run because the implementation is not scaffolded yet, explicitly report that limitation in the PR summary.
 
 ## Architecture
 
