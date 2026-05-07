@@ -5,20 +5,22 @@ import { generateAppSpec } from "@/lib/ai/generate-app-spec";
 import { generateDesignSpec } from "@/lib/ai/generate-design-spec";
 import { generateFilePatches } from "@/lib/ai/generate-file-patches";
 import { generateGenerationPlan } from "@/lib/ai/generate-generation-plan";
-import { addGeneratedFile, createGenerationJob, updateGenerationJobStatus } from "@/lib/db/repositories/generation-repository";
+import { addGeneratedFile, addGenerationEvent, createGenerationJob, updateGenerationJobStatus } from "@/lib/db/repositories/generation-repository";
 import { createProjectVersion } from "@/lib/db/repositories/projects-repository";
 import type { Database } from "@/lib/db/client";
 
-import type { GenerationEventEmitter } from "@/features/generation/generation-events";
+import type { GenerationEventEmitter, PendingGenerationEvent } from "@/features/generation/generation-events";
 import type { JobRunner } from "@/features/generation/job-runner";
 import { validatePatchBatch } from "@/features/generation/patch-validator";
 import { VirtualFileSystem, type VirtualFileSystemSnapshot } from "@/features/generation/virtual-file-system";
+
+const EMPTY_TREE = { root: { path: "root", type: "directory" as const, children: [] as [] } };
 
 export interface OrchestratorAi {
   generateAppSpec: (brief: string) => Promise<AppSpec>;
   generateDesignSpec: (appSpec: AppSpec) => Promise<DesignSpec>;
   generateGenerationPlan: (appSpec: AppSpec, designSpec: DesignSpec) => Promise<GenerationPlan>;
-  generateFilePatches: (plan: GenerationPlan, tree: { root: { path: string; type: "file" | "directory"; children: [] } }) => Promise<FilePatch[]>;
+  generateFilePatches: (plan: GenerationPlan, tree: typeof EMPTY_TREE) => Promise<FilePatch[]>;
 }
 
 export interface GenerationOrchestratorInput {
@@ -56,33 +58,44 @@ export function createGenerationOrchestrator(deps: {
         input: { userBrief: input.userBrief },
       });
 
-      const emit = (eventType: string, message: string, payload?: Record<string, unknown>) =>
-        deps.events.emit({ level: "info", eventType, message, payload });
+      const emit = async (event: PendingGenerationEvent) => {
+        await deps.events.emit(event);
+        await addGenerationEvent(deps.db, {
+          generationJobId: job.id,
+          eventType: event.eventType,
+          message: event.message,
+          level: event.level,
+          payload: event.payload,
+        });
+      };
 
       await updateGenerationJobStatus(deps.db, { jobId: job.id, status: "running" });
-      await emit("generation.started", "Generation run started.");
+      await emit({ level: "info", eventType: "generation.started", message: "Generation run started." });
 
       const vfs = new VirtualFileSystem(input.baseFiles);
       try {
         const appSpec = await deps.runner.run("generate-app-spec", async () => ai.generateAppSpec(input.userBrief));
-        await emit("generation.app_spec_generated", "Generated AppSpec.");
+        await emit({ level: "info", eventType: "generation.app_spec_generated", message: "Generated AppSpec." });
 
         const designSpec = await deps.runner.run("generate-design-spec", async () => ai.generateDesignSpec(appSpec));
-        await emit("generation.design_spec_generated", "Generated DesignSpec.");
+        await emit({ level: "info", eventType: "generation.design_spec_generated", message: "Generated DesignSpec." });
 
         const plan = await deps.runner.run("generate-generation-plan", async () => ai.generateGenerationPlan(appSpec, designSpec));
-        await emit("generation.plan_generated", "Generated GenerationPlan.");
+        await emit({ level: "info", eventType: "generation.plan_generated", message: "Generated GenerationPlan." });
 
-        const patches = await deps.runner.run("generate-file-patches", async () =>
-          ai.generateFilePatches(plan, { root: { path: "root", type: "directory", children: [] } }),
-        );
-        await emit("generation.patch_batch_generated", "Generated file patch batch.", { patchCount: patches.length });
+        const patches = await deps.runner.run("generate-file-patches", async () => ai.generateFilePatches(plan, EMPTY_TREE));
+        await emit({
+          level: "info",
+          eventType: "generation.patch_batch_generated",
+          message: "Generated file patch batch.",
+          payload: { patchCount: patches.length },
+        });
 
         const validPatches = validatePatchBatch(patches);
-        await emit("generation.patch_batch_validated", "Validated patch batch.");
+        await emit({ level: "info", eventType: "generation.patch_batch_validated", message: "Validated patch batch." });
 
         vfs.applyPatches(validPatches);
-        await emit("generation.patches_applied", "Applied patches to virtual file system.");
+        await emit({ level: "info", eventType: "generation.patches_applied", message: "Applied patches to virtual file system." });
 
         const version = await createProjectVersion(deps.db, {
           projectId: input.projectId,
@@ -91,8 +104,9 @@ export function createGenerationOrchestrator(deps: {
           changelog: `Generated ${validPatches.length} file patches.`,
         });
 
+        const files = vfs.listFiles();
         await Promise.all(
-          vfs.listFiles().map((file) =>
+          files.map((file) =>
             addGeneratedFile(deps.db, {
               generationJobId: job.id,
               projectVersionId: version.id,
@@ -107,24 +121,19 @@ export function createGenerationOrchestrator(deps: {
         await updateGenerationJobStatus(deps.db, {
           jobId: job.id,
           status: "succeeded",
-          output: { patchCount: validPatches.length, fileCount: vfs.listFiles().length },
+          output: { patchCount: validPatches.length, fileCount: files.length },
         });
 
-        await emit("generation.completed", "Generation run completed successfully.");
+        await emit({ level: "info", eventType: "generation.completed", message: "Generation run completed successfully." });
 
-        return {
-          generationJobId: job.id,
-          projectVersionId: version.id,
-          patchCount: validPatches.length,
-          fileCount: vfs.listFiles().length,
-        };
+        return { generationJobId: job.id, projectVersionId: version.id, patchCount: validPatches.length, fileCount: files.length };
       } catch (error) {
         await updateGenerationJobStatus(deps.db, {
           jobId: job.id,
           status: "failed",
           errorMessage: error instanceof Error ? error.message : "Unknown generation error",
         });
-        await deps.events.emit({
+        await emit({
           level: "error",
           eventType: "generation.failed",
           message: "Generation run failed.",

@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import generationPlanFixture from "@/schemas/fixtures/generation-plan.json";
-import { createGenerationOrchestrator } from "@/features/generation/orchestrator";
+import { GenerationPlanSchema } from "@/schemas";
+import { createGenerationOrchestrator, type OrchestratorAi } from "@/features/generation/orchestrator";
 import { createInMemoryGenerationEventEmitter, type GenerationEvent } from "@/features/generation/generation-events";
 import { InlineJobRunner } from "@/features/generation/job-runner";
 
@@ -18,19 +19,23 @@ describe("generation orchestrator", () => {
     const db = createMockDb();
     const events: GenerationEvent[] = [];
 
+    const typedPlan = GenerationPlanSchema.parse(generationPlanFixture);
+
+    const ai: OrchestratorAi = {
+      generateAppSpec: async () => typedPlan.appSpec,
+      generateDesignSpec: async () => typedPlan.designSpec,
+      generateGenerationPlan: async () => typedPlan,
+      generateFilePatches: async () => [
+        { operation: "create", path: "app/page.tsx", content: "export default function Page(){return null;}", reason: "Create page" },
+        { operation: "create", path: "README.md", content: "# Generated", reason: "Create readme" },
+      ],
+    };
+
     const orchestrator = createGenerationOrchestrator({
       db: db as never,
       events: createInMemoryGenerationEventEmitter(events),
       runner: new InlineJobRunner(),
-      ai: {
-        generateAppSpec: vi.fn(async () => generationPlanFixture.appSpec),
-        generateDesignSpec: vi.fn(async () => generationPlanFixture.designSpec),
-        generateGenerationPlan: vi.fn(async () => generationPlanFixture),
-        generateFilePatches: vi.fn(async () => [
-          { operation: "create", path: "app/page.tsx", content: "export default function Page(){return null;}", reason: "Create page" },
-          { operation: "create", path: "README.md", content: "# Generated", reason: "Create readme" },
-        ]),
-      },
+      ai,
     });
 
     const result = await orchestrator.run({

@@ -8,8 +8,10 @@ export interface GenerationEvent {
   createdAt: string;
 }
 
+export type PendingGenerationEvent = Omit<GenerationEvent, "createdAt">;
+
 export interface GenerationEventEmitter {
-  emit: (event: Omit<GenerationEvent, "createdAt">) => Promise<void> | void;
+  emit: (event: PendingGenerationEvent) => Promise<void> | void;
 }
 
 export function createInMemoryGenerationEventEmitter(events: GenerationEvent[] = []): GenerationEventEmitter {
