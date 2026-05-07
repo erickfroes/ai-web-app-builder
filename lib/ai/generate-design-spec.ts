@@ -3,13 +3,13 @@ import { DesignSpecSchema, type AppSpec, type DesignSpec } from "@/schemas";
 import { AI_SYSTEM_PROMPT, buildDesignSpecPrompt } from "@/lib/ai/prompts";
 import { AiLayerError, createOpenAiClient, DEFAULT_OPENAI_MODEL } from "@/lib/ai/client";
 
-export const generateDesignSpec = async (appSpec: AppSpec): Promise<DesignSpec> => {
+export const generateDesignSpec = async (appSpec: AppSpec, templateConstraint?: string): Promise<DesignSpec> => {
   const client = createOpenAiClient();
   const response = await client.beta.chat.completions.parse({
     model: DEFAULT_OPENAI_MODEL,
     messages: [
       { role: "system", content: AI_SYSTEM_PROMPT },
-      { role: "user", content: buildDesignSpecPrompt(JSON.stringify(appSpec)) },
+      { role: "user", content: buildDesignSpecPrompt(JSON.stringify(appSpec), templateConstraint) },
     ],
     response_format: zodResponseFormat(DesignSpecSchema, "design_spec"),
   });

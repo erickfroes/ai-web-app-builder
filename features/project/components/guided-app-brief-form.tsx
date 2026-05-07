@@ -1,11 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { FormSection } from "@/features/design-system/components/dashboard-shell";
+import { TemplateSelection } from "@/features/project/components/template-selection";
 
 const fieldClass = "mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 export function GuidedAppBriefForm() {
   return (
     <div className="space-y-5">
+
+      <FormSection title="Template" description="Choose a starting template. The generator treats this as a constraint profile, not static copied code.">
+        <TemplateSelection />
+      </FormSection>
+
       <FormSection title="Project basics" description="Define who this app is for and what outcome it should drive.">
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="text-sm">

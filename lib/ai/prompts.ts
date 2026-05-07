@@ -2,10 +2,11 @@ export const AI_SYSTEM_PROMPT = `You are a senior SaaS web app architect.
 Return only data that matches the requested schema.
 Prefer practical, implementation-ready outputs.`;
 
-export const buildAppSpecPrompt = (request: string) => `Create an AppSpec for this product request:\n${request}`;
+export const buildAppSpecPrompt = (request: string, templateConstraint?: string) =>
+  `Create an AppSpec for this product request:\n${request}${templateConstraint ? `\nTemplate constraints:\n${templateConstraint}` : ""}`;
 
-export const buildDesignSpecPrompt = (appSpecJson: string) =>
-  `Create a DesignSpec for this AppSpec:\n${appSpecJson}`;
+export const buildDesignSpecPrompt = (appSpecJson: string, templateConstraint?: string) =>
+  `Create a DesignSpec for this AppSpec:\n${appSpecJson}${templateConstraint ? `\nTemplate constraints:\n${templateConstraint}` : ""}`;
 
 export const buildGenerationPlanPrompt = (appSpecJson: string, designSpecJson: string) =>
   `Create a GenerationPlan using this AppSpec:\n${appSpecJson}\nAnd this DesignSpec:\n${designSpecJson}`;
