@@ -1,11 +1,14 @@
+import Link from "next/link";
+
 import { Card } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
 import { DataCard, ErrorState, LoadingState, StatusBadge } from "@/features/design-system/components/dashboard-shell";
 
-export function ProjectGenerationWorkspace() {
+export function ProjectGenerationWorkspace({ projectId }: { projectId: string }) {
   return (
     <div className="grid gap-6 xl:grid-cols-12">
       <div className="space-y-6 xl:col-span-5">
-        <GenerationStatusPanel />
+        <GenerationStatusPanel projectId={projectId} />
         <VersionHistoryPanel />
       </div>
       <div className="space-y-6 xl:col-span-7">
@@ -16,10 +19,15 @@ export function ProjectGenerationWorkspace() {
   );
 }
 
-function GenerationStatusPanel() {
+function GenerationStatusPanel({ projectId }: { projectId: string }) {
   return (
     <DataCard title="Generation status" description="Current orchestration phase, progress and blockers.">
       <div className="space-y-3 text-sm">
+        <div className="flex justify-end">
+          <Link href={`/api/projects/${projectId}/export`} className={buttonVariants({ size: 'sm' })}>
+            Download ZIP
+          </Link>
+        </div>
         <div className="flex items-center justify-between rounded-md border border-border p-3">
           <span>Spec synthesis</span>
           <StatusBadge status="ready" />
