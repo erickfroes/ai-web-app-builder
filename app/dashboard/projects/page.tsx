@@ -1,13 +1,30 @@
-import { Card } from "@/components/ui/card";
+import Link from "next/link";
+
+import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/features/design-system/components/dashboard-shell";
+import { ProjectList, ProjectListEmpty, ProjectListError, ProjectListLoading } from "@/features/project/components/project-list";
 
 export default function ProjectListPage() {
   return (
-    <section className="space-y-4">
-      <h1 className="text-2xl font-semibold">Projects</h1>
-      <Card className="p-6">
-        <h2 className="text-lg font-medium">No projects yet</h2>
-        <p className="text-sm text-foreground/80">Create your first project to start generating an app.</p>
-      </Card>
+    <section className="space-y-6">
+      <PageHeader
+        title="Projects"
+        description="Manage app generation workspaces, monitor status and open project details."
+        action={
+          <Link href="/dashboard/projects/new">
+            <Button>Create project</Button>
+          </Link>
+        }
+      />
+
+      <ProjectList />
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-muted-foreground">State library</h2>
+        <ProjectListLoading />
+        <ProjectListEmpty />
+        <ProjectListError />
+      </section>
     </section>
   );
 }
