@@ -47,3 +47,11 @@ export async function getProjectVersion(db: Database, projectId: string, version
 
   return version ?? null;
 }
+
+export async function listProjectVersions(db: Database, projectId: string) {
+  return db
+    .select()
+    .from(projectVersions)
+    .where(eq(projectVersions.projectId, projectId))
+    .orderBy(desc(projectVersions.versionNumber));
+}

@@ -1,4 +1,4 @@
-import { asc, eq } from 'drizzle-orm';
+import { asc, desc, eq } from 'drizzle-orm';
 
 import type { Database } from '@/lib/db/client';
 import { generatedFiles, generationEvents, generationJobs } from '@/lib/db/schema';
@@ -78,4 +78,34 @@ export async function listGenerationEvents(db: Database, generationJobId: string
     .from(generationEvents)
     .where(eq(generationEvents.generationJobId, generationJobId))
     .orderBy(asc(generationEvents.createdAt));
+}
+
+export async function listGeneratedFilesForProject(db: Database, projectId: string) {
+  return db
+    .select({
+      id: generatedFiles.id,
+      generationJobId: generatedFiles.generationJobId,
+      projectVersionId: generatedFiles.projectVersionId,
+      path: generatedFiles.path,
+      sizeBytes: generatedFiles.sizeBytes,
+      createdAt: generatedFiles.createdAt,
+    })
+    .from(generatedFiles)
+    .innerJoin(generationJobs, eq(generatedFiles.generationJobId, generationJobs.id))
+    .where(eq(generationJobs.projectId, projectId))
+    .orderBy(desc(generatedFiles.createdAt));
+}
+
+export async function listGeneratedFilesContentForProject(db: Database, projectId: string) {
+  return db
+    .select({
+      path: generatedFiles.path,
+      content: generatedFiles.content,
+      contentSha256: generatedFiles.contentSha256,
+      sizeBytes: generatedFiles.sizeBytes,
+    })
+    .from(generatedFiles)
+    .innerJoin(generationJobs, eq(generatedFiles.generationJobId, generationJobs.id))
+    .where(eq(generationJobs.projectId, projectId))
+    .orderBy(asc(generatedFiles.path));
 }
