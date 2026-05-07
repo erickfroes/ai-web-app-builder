@@ -14,7 +14,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         title={`Project ${projectId}`}
         description="Inspect generation progress, file outputs, and version history for this project."
       />
-      <ProjectGenerationWorkspace />
+      <ProjectGenerationWorkspace projectId={projectId} />
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-muted-foreground">State library</h2>
