@@ -44,15 +44,15 @@ describe("AI layer", () => {
 
   it("generates plan, patches and review report", async () => {
     parseMock
+      .mockResolvedValueOnce({ choices: [{ message: { parsed: generationPlanFixture.appSpec } }] })
       .mockResolvedValueOnce({ choices: [{ message: { parsed: generationPlanFixture.designSpec } }] })
       .mockResolvedValueOnce({ choices: [{ message: { parsed: generationPlanFixture } }] })
       .mockResolvedValueOnce({
         choices: [{ message: { parsed: [{ operation: "create", path: "app/page.tsx", content: "export default function Page(){}", reason: "new page" }] } }],
       })
-      .mockResolvedValueOnce({ choices: [{ message: { parsed: { summary: "Looks good", approved: true, issues: [] } } }] });
+      .mockResolvedValueOnce({ choices: [{ message: { parsed: { summary: "Looks good", approved: true, issues: [], uiQualityScore: { semanticTokens: 9, layoutHierarchy: 9, responsiveBehavior: 8, uxStates: 8, saasVisualQuality: 9, designSpecConsistency: 9, overall: 88 }, suggestions: [], hardFailReasons: [] } } }] });
 
-    const designSpec = await generateDesignSpec(generationPlanFixture.appSpec);
-    const plan = await generateGenerationPlan(generationPlanFixture.appSpec, designSpec);
+    const plan = await generateGenerationPlan("Build CRM app");
     const patches = await generateFilePatches(plan, { root: { path: "root", type: "directory", children: [] } });
     const review = await reviewGeneration(plan, patches);
 

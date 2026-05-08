@@ -32,3 +32,10 @@ Sample fixtures are provided under `schemas/fixtures/`:
 - `build-fix-plan.json`
 
 These fixtures are validated in `schemas/__tests__/schemas.test.ts`.
+
+
+## ReviewReport extensions
+
+- ReviewReport includes UI quality scoring by category plus overall score.
+- ReviewReport includes automatic prioritized suggestions.
+- ReviewReport includes hard-fail reasons to block low-quality UI output.

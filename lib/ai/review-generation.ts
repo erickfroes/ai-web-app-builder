@@ -32,5 +32,15 @@ export const reviewGeneration = async (plan: GenerationPlan, patches: FilePatch[
     throw new AiLayerError("REVIEW_REPORT_INVALID", "Model returned an invalid ReviewReport payload.");
   }
 
-  return parsed.data;
+  const normalizedHardFailReasons = parsed.data.hardFailReasons.length > 0
+    ? parsed.data.hardFailReasons
+    : parsed.data.issues.filter((issue) => issue.severity === "error").map((issue) => issue.message);
+
+  const computedApproval = normalizedHardFailReasons.length === 0 && parsed.data.uiQualityScore.overall >= 70;
+
+  return {
+    ...parsed.data,
+    approved: parsed.data.approved && computedApproval,
+    hardFailReasons: normalizedHardFailReasons,
+  };
 };
