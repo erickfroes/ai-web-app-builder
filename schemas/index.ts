@@ -107,11 +107,35 @@ export const ReviewIssueSchema = z
   })
   .strict();
 
+export const UiQualityScoreSchema = z
+  .object({
+    semanticTokens: z.number().int().min(0).max(10),
+    layoutHierarchy: z.number().int().min(0).max(10),
+    responsiveBehavior: z.number().int().min(0).max(10),
+    uxStates: z.number().int().min(0).max(10),
+    saasVisualQuality: z.number().int().min(0).max(10),
+    designSpecConsistency: z.number().int().min(0).max(10),
+    overall: z.number().int().min(0).max(100),
+  })
+  .strict();
+
+export const ReviewSuggestionSchema = z
+  .object({
+    priority: z.enum(["high", "medium", "low"]),
+    title: z.string().min(1),
+    action: z.string().min(1),
+    path: RelativeFilePathSchema.optional(),
+  })
+  .strict();
+
 export const ReviewReportSchema = z
   .object({
     summary: z.string().min(1),
     approved: z.boolean(),
     issues: z.array(ReviewIssueSchema),
+    uiQualityScore: UiQualityScoreSchema,
+    suggestions: z.array(ReviewSuggestionSchema),
+    hardFailReasons: z.array(z.string().min(1)),
   })
   .strict();
 
