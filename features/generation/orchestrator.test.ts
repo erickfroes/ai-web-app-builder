@@ -22,8 +22,6 @@ describe("generation orchestrator", () => {
     const typedPlan = GenerationPlanSchema.parse(generationPlanFixture);
 
     const ai: OrchestratorAi = {
-      generateAppSpec: async () => typedPlan.appSpec,
-      generateDesignSpec: async () => typedPlan.designSpec,
       generateGenerationPlan: async () => typedPlan,
       generateFilePatches: async () => [
         { operation: "create", path: "app/page.tsx", content: "export default function Page(){return null;}", reason: "Create page" },

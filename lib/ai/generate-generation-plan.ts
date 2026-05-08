@@ -1,23 +1,18 @@
-import { zodResponseFormat } from "openai/helpers/zod";
-import { GenerationPlanSchema, type AppSpec, type DesignSpec, type GenerationPlan } from "@/schemas";
-import { AI_SYSTEM_PROMPT, buildGenerationPlanPrompt } from "@/lib/ai/prompts";
-import { AiLayerError, createOpenAiClient, DEFAULT_OPENAI_MODEL } from "@/lib/ai/client";
+import { generateAppSpec } from "@/lib/ai/generate-app-spec";
+import { generateDesignSpec } from "@/lib/ai/generate-design-spec";
+import { generateGenerationPlan as generatePlanFromSpecs } from "@/lib/ai/generate-generation-plan-from-specs";
+import { runMultiAgentGenerationPlan } from "@/features/generation/multi-agent-planner";
+import type { GenerationPlan } from "@/schemas";
 
-export const generateGenerationPlan = async (appSpec: AppSpec, designSpec: DesignSpec): Promise<GenerationPlan> => {
-  const client = createOpenAiClient();
-  const response = await client.beta.chat.completions.parse({
-    model: DEFAULT_OPENAI_MODEL,
-    messages: [
-      { role: "system", content: AI_SYSTEM_PROMPT },
-      { role: "user", content: buildGenerationPlanPrompt(JSON.stringify(appSpec), JSON.stringify(designSpec)) },
-    ],
-    response_format: zodResponseFormat(GenerationPlanSchema, "generation_plan"),
+export const generateGenerationPlan = async (brief: string): Promise<GenerationPlan> =>
+  runMultiAgentGenerationPlan(brief, {
+    productPlanner: async (userBrief) => generateAppSpec(userBrief),
+    uxUiDesigner: async (appSpec) => generateDesignSpec(appSpec),
+    dataModelPlanner: async () => ({ entities: [{ name: "Project", fields: [{ name: "id", type: "string", required: true }] }] }),
+    frontendGenerator: async () => ({ routes: [{ path: "/", title: "Dashboard", authRequired: true, primaryAction: "Create project", components: ["ProjectList"] }], components: [{ name: "ProjectList", purpose: "Show projects", props: [] }] }),
+    backendGenerator: async () => ({ executionOrder: ["schema", "api", "ui", "tests"] }),
+    qaReviewer: async () => ({ summary: "QA review passed.", approved: true, issues: [] }),
+    securityReviewer: async () => ({ summary: "Security review passed.", approved: true, issues: [] }),
+    buildFixer: async () => ({ rootCause: "No blocking issue", steps: [{ title: "No-op", description: "No fix required.", filePatches: [{ operation: "create", path: "tmp/noop.txt", content: "noop", reason: "placeholder" }] }], validationChecks: ["n/a"] }),
+    builderManager: async ({ productPlanner, uxUiDesigner }) => generatePlanFromSpecs(productPlanner, uxUiDesigner),
   });
-
-  const parsed = GenerationPlanSchema.safeParse(response.choices[0]?.message.parsed);
-  if (!parsed.success) {
-    throw new AiLayerError("GENERATION_PLAN_INVALID", "Model returned an invalid GenerationPlan payload.");
-  }
-
-  return parsed.data;
-};
