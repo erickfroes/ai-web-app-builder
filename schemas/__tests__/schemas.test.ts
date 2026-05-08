@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   AppSpecSchema,
+  BuildLogSchema,
   BuildFixPlanSchema,
   FilePatchSchema,
   GenerationPlanSchema,
@@ -17,6 +18,14 @@ describe("schema contracts", () => {
 
   it("validates build fix plan fixture", () => {
     const result = BuildFixPlanSchema.safeParse(buildFixPlanFixture);
+    expect(result.success).toBe(true);
+  });
+
+  it("validates build log schema", () => {
+    const result = BuildLogSchema.safeParse({
+      rawLog: "error TS2322: Type 'number' is not assignable to type 'string'",
+      source: "tsc",
+    });
     expect(result.success).toBe(true);
   });
 

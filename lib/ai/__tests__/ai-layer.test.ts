@@ -4,6 +4,7 @@ import { generateAppSpec } from "@/lib/ai/generate-app-spec";
 import { generateDesignSpec } from "@/lib/ai/generate-design-spec";
 import { generateGenerationPlan } from "@/lib/ai/generate-generation-plan";
 import { generateFilePatches } from "@/lib/ai/generate-file-patches";
+import { fixBuildErrors } from "@/lib/ai/fix-build-errors";
 import { reviewGeneration } from "@/lib/ai/review-generation";
 
 const parseMock = vi.fn();
@@ -59,5 +60,28 @@ describe("AI layer", () => {
     expect(plan.executionOrder.length).toBeGreaterThan(0);
     expect(patches[0]?.path).toBe("app/page.tsx");
     expect(review.approved).toBe(true);
+  });
+
+  it("generates build fix plan from build logs", async () => {
+    parseMock.mockResolvedValueOnce({
+      choices: [{ message: { parsed: {
+        buildLog: { rawLog: "Type 'number' is not assignable to type 'string'", source: "tsc" },
+        rootCause: "Mismatched type in generated prop",
+        steps: [{
+          title: "Align prop types",
+          description: "Update component prop typing to string",
+          filePatches: [{ operation: "update", path: "app/page.tsx", content: "export default function Page(){return null}", reason: "Fix type" }],
+        }],
+        validationChecks: ["pnpm typecheck"],
+      } } }],
+    });
+
+    const result = await fixBuildErrors(
+      { rawLog: "Type 'number' is not assignable to type 'string'", source: "tsc" },
+      { root: { path: "root", type: "directory", children: [] } },
+    );
+
+    expect(result.rootCause).toContain("type");
+    expect(result.steps.length).toBeGreaterThan(0);
   });
 });
