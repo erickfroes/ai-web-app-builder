@@ -1,8 +1,8 @@
 import Link from "next/link";
 
-import { Card } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { DataCard, ErrorState, LoadingState, StatusBadge } from "@/features/design-system/components/dashboard-shell";
+import { PreviewTab } from "@/features/generation/components/preview-tab";
 
 export function ProjectGenerationWorkspace({ projectId }: { projectId: string }) {
   return (
@@ -14,7 +14,7 @@ export function ProjectGenerationWorkspace({ projectId }: { projectId: string })
       <div className="space-y-6 xl:col-span-7">
         <BuildErrorFixPanel />
         <GeneratedFileExplorer />
-        <FilePreviewPanel />
+        <PreviewPanel projectId={projectId} />
       </div>
     </div>
   );
@@ -94,16 +94,10 @@ function GeneratedFileExplorer() {
   );
 }
 
-function FilePreviewPanel() {
+function PreviewPanel({ projectId }: { projectId: string }) {
   return (
-    <DataCard title="File preview" description="Review generated file content snapshots (live preview intentionally disabled).">
-      <Card className="overflow-hidden bg-background">
-        <pre className="max-h-72 overflow-auto p-4 text-xs text-muted-foreground">
-{`export default function DashboardPage() {
-  return <main className="p-6">Generated output preview...</main>;
-}`}
-        </pre>
-      </Card>
+    <DataCard title="UI preview" description="Preview adapters are provider-agnostic and isolated from the control plane runtime.">
+      <PreviewTab projectId={projectId} />
     </DataCard>
   );
 }
