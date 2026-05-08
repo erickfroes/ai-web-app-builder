@@ -12,10 +12,43 @@ export function ProjectGenerationWorkspace({ projectId }: { projectId: string })
         <VersionHistoryPanel />
       </div>
       <div className="space-y-6 xl:col-span-7">
+        <BuildErrorFixPanel />
         <GeneratedFileExplorer />
         <FilePreviewPanel />
       </div>
     </div>
+  );
+}
+
+function BuildErrorFixPanel() {
+  return (
+    <DataCard
+      title="Fix build errors"
+      description="Paste compile/build logs to generate a safe patch proposal flow without executing generated code."
+    >
+      <div className="space-y-4">
+        <label className="space-y-2 text-sm">
+          <span className="font-medium">Build log input</span>
+          <textarea
+            className="min-h-36 w-full rounded-md border border-border bg-background p-3 font-mono text-xs text-foreground"
+            placeholder="Paste TypeScript / Next.js / ESLint build output here..."
+            defaultValue={"Type error in app/dashboard/page.tsx: Property 'items' does not exist on type 'Project'."}
+          />
+        </label>
+
+        <div className="rounded-md border border-border bg-card p-3 text-xs text-muted-foreground">
+          Patch proposal flow: parse log → propose file patches → validate path + schema → user applies patches to selected generated version.
+        </div>
+
+        <div className="flex items-center justify-between rounded-md border border-border p-3 text-sm">
+          <div>
+            <p className="font-medium">Proposed patch set #1</p>
+            <p className="text-xs text-muted-foreground">2 file updates · validation pending</p>
+          </div>
+          <button className={buttonVariants({ size: "sm" })}>Generate patch proposal</button>
+        </div>
+      </div>
+    </DataCard>
   );
 }
 

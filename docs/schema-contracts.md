@@ -14,6 +14,7 @@ This document defines structured schema contracts for the AI web app generation 
 - `FileTree`
 - `ReviewReport`
 - `BuildFixPlan`
+- `BuildLog`
 
 All schemas are implemented with Zod strict objects in `schemas/index.ts`.
 
@@ -39,3 +40,10 @@ These fixtures are validated in `schemas/__tests__/schemas.test.ts`.
 - ReviewReport includes UI quality scoring by category plus overall score.
 - ReviewReport includes automatic prioritized suggestions.
 - ReviewReport includes hard-fail reasons to block low-quality UI output.
+
+
+## Build error fix flow contracts
+
+- `BuildLog` captures raw build output plus optional summary and source classifier.
+- `BuildFixPlan` now embeds `buildLog` to keep AI patch proposals tied to original error evidence.
+- Patch proposals must remain schema-validated and path-sanitized before user application.

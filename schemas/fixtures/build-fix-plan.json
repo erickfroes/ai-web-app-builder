@@ -1,4 +1,8 @@
 {
+  "buildLog": {
+    "rawLog": "Type 'Task | undefined' is not assignable to type 'Task[]'",
+    "source": "tsc"
+  },
   "rootCause": "Type mismatch between generated component props and route loader output",
   "steps": [
     {
@@ -14,5 +18,8 @@
       ]
     }
   ],
-  "validationChecks": ["pnpm typecheck", "pnpm test"]
+  "validationChecks": [
+    "pnpm typecheck",
+    "pnpm test"
+  ]
 }

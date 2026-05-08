@@ -34,7 +34,7 @@ describe("multi-agent planner", () => {
       backendGenerator: async () => ({ executionOrder: typedPlan.executionOrder }),
       qaReviewer: async () => ({ summary: "bad", approved: false, issues: [{ severity: "error", message: "Broken", path: "app/page.tsx" }], uiQualityScore: { semanticTokens: 4, layoutHierarchy: 4, responsiveBehavior: 5, uxStates: 3, saasVisualQuality: 4, designSpecConsistency: 4, overall: 45 }, suggestions: [{ priority: "high", title: "Fix hierarchy", action: "Add clear page structure", path: "app/page.tsx" }], hardFailReasons: ["overall score < 70"] }),
       securityReviewer: async () => ({ summary: "ok", approved: true, issues: [], uiQualityScore: { semanticTokens: 8, layoutHierarchy: 8, responsiveBehavior: 8, uxStates: 8, saasVisualQuality: 8, designSpecConsistency: 8, overall: 80 }, suggestions: [], hardFailReasons: [] }),
-      buildFixer: async () => ({ rootCause: "Broken", steps: [{ title: "Fix", description: "Patch", filePatches: [{ operation: "create", path: "tmp/fix.txt", content: "fix", reason: "fix" }] }], validationChecks: ["pnpm test"] }),
+      buildFixer: async () => ({ buildLog: { rawLog: "Broken", source: "other" }, rootCause: "Broken", steps: [{ title: "Fix", description: "Patch", filePatches: [{ operation: "create", path: "tmp/fix.txt", content: "fix", reason: "fix" }] }], validationChecks: ["pnpm test"] }),
       builderManager: async () => typedPlan,
     };
 

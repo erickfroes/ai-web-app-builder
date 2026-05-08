@@ -147,8 +147,17 @@ export const BuildFixStepSchema = z
   })
   .strict();
 
+export const BuildLogSchema = z
+  .object({
+    rawLog: z.string().min(1),
+    summary: z.string().min(1).optional(),
+    source: z.enum(["next-build", "tsc", "eslint", "other"]).default("other"),
+  })
+  .strict();
+
 export const BuildFixPlanSchema = z
   .object({
+    buildLog: BuildLogSchema,
     rootCause: z.string().min(1),
     steps: z.array(BuildFixStepSchema).min(1),
     validationChecks: z.array(z.string().min(1)).min(1),
@@ -165,6 +174,7 @@ export type FilePatch = z.infer<typeof FilePatchSchema>;
 export type FileTree = z.infer<typeof FileTreeSchema>;
 export type ReviewReport = z.infer<typeof ReviewReportSchema>;
 export type BuildFixPlan = z.infer<typeof BuildFixPlanSchema>;
+export type BuildLog = z.infer<typeof BuildLogSchema>;
 
 export const validateWith = <T>(schema: z.ZodSchema<T>, input: unknown) => schema.safeParse(input);
 
@@ -173,3 +183,4 @@ export const validateFilePatch = (input: unknown) => validateWith(FilePatchSchem
 export const validateFileTree = (input: unknown) => validateWith(FileTreeSchema, input);
 export const validateReviewReport = (input: unknown) => validateWith(ReviewReportSchema, input);
 export const validateBuildFixPlan = (input: unknown) => validateWith(BuildFixPlanSchema, input);
+export const validateBuildLog = (input: unknown) => validateWith(BuildLogSchema, input);

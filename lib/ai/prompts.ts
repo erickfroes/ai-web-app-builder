@@ -46,3 +46,17 @@ Suggestion rules:
 
 GenerationPlan JSON:\n${planJson}\n
 FilePatch JSON:\n${patchesJson}`;
+
+export const buildFixBuildErrorsPrompt = (buildLogJson: string, fileTreeJson: string) =>
+  `Create a BuildFixPlan from this build log and repository file tree.
+
+Rules:
+- Only propose file patches; do not run or suggest running generated code in runtime.
+- Keep patches inside project-relative paths.
+- Include deterministic validation checks (typecheck/lint/test/build) without executing untrusted user code.
+
+BuildLog JSON:
+${buildLogJson}
+
+FileTree JSON:
+${fileTreeJson}`;
