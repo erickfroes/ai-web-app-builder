@@ -1,8 +1,6 @@
 import { createHash } from "node:crypto";
 
-import type { AppSpec, DesignSpec, FilePatch, GenerationPlan } from "@/schemas";
-import { generateAppSpec } from "@/lib/ai/generate-app-spec";
-import { generateDesignSpec } from "@/lib/ai/generate-design-spec";
+import type { FilePatch, GenerationPlan } from "@/schemas";
 import { generateFilePatches } from "@/lib/ai/generate-file-patches";
 import { generateGenerationPlan } from "@/lib/ai/generate-generation-plan";
 import { addGeneratedFile, addGenerationEvent, createGenerationJob, updateGenerationJobStatus } from "@/lib/db/repositories/generation-repository";
@@ -17,9 +15,7 @@ import { VirtualFileSystem, type VirtualFileSystemSnapshot } from "@/features/ge
 const EMPTY_TREE = { root: { path: "root", type: "directory" as const, children: [] as [] } };
 
 export interface OrchestratorAi {
-  generateAppSpec: (brief: string) => Promise<AppSpec>;
-  generateDesignSpec: (appSpec: AppSpec) => Promise<DesignSpec>;
-  generateGenerationPlan: (appSpec: AppSpec, designSpec: DesignSpec) => Promise<GenerationPlan>;
+  generateGenerationPlan: (brief: string) => Promise<GenerationPlan>;
   generateFilePatches: (plan: GenerationPlan, tree: typeof EMPTY_TREE) => Promise<FilePatch[]>;
 }
 
@@ -44,8 +40,6 @@ export function createGenerationOrchestrator(deps: {
   ai?: OrchestratorAi;
 }) {
   const ai = deps.ai ?? {
-    generateAppSpec,
-    generateDesignSpec,
     generateGenerationPlan,
     generateFilePatches,
   };
@@ -74,13 +68,7 @@ export function createGenerationOrchestrator(deps: {
 
       const vfs = new VirtualFileSystem(input.baseFiles);
       try {
-        const appSpec = await deps.runner.run("generate-app-spec", async () => ai.generateAppSpec(input.userBrief));
-        await emit({ level: "info", eventType: "generation.app_spec_generated", message: "Generated AppSpec." });
-
-        const designSpec = await deps.runner.run("generate-design-spec", async () => ai.generateDesignSpec(appSpec));
-        await emit({ level: "info", eventType: "generation.design_spec_generated", message: "Generated DesignSpec." });
-
-        const plan = await deps.runner.run("generate-generation-plan", async () => ai.generateGenerationPlan(appSpec, designSpec));
+        const plan = await deps.runner.run("generate-generation-plan", async () => ai.generateGenerationPlan(input.userBrief));
         await emit({ level: "info", eventType: "generation.plan_generated", message: "Generated GenerationPlan." });
 
         const patches = await deps.runner.run("generate-file-patches", async () => ai.generateFilePatches(plan, EMPTY_TREE));
@@ -100,7 +88,7 @@ export function createGenerationOrchestrator(deps: {
         const version = await createProjectVersion(deps.db, {
           projectId: input.projectId,
           versionNumber: (input.currentVersionNumber ?? 0) + 1,
-          spec: { appSpec, designSpec, plan },
+          spec: { appSpec: plan.appSpec, designSpec: plan.designSpec, plan },
           changelog: `Generated ${validPatches.length} file patches.`,
         });
 
